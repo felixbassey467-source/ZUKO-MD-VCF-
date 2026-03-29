@@ -22,7 +22,6 @@
       position: relative;
     }
 
-    /* dark animated mesh */
     body::before {
       content: "";
       position: fixed;
@@ -37,7 +36,7 @@
     }
 
     .vault-card {
-      background: rgba(6, 10, 22, 0.9);
+      background: rgba(6, 10, 22, 0.92);
       backdrop-filter: blur(16px);
       border-radius: 2.8rem;
       border: 1px solid rgba(0, 200, 255, 0.35);
@@ -151,11 +150,16 @@
       background: linear-gradient(95deg, #132b52, #06102a);
     }
 
-    .btn-submit-primary:hover {
+    .btn-submit-primary:hover:not(:disabled) {
       background: linear-gradient(95deg, #1e3f72, #0b1c3c);
       transform: scale(0.98);
       border-color: #0ff;
       box-shadow: 0 0 18px rgba(0, 255, 255, 0.5);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
 
     .status-area {
@@ -183,7 +187,6 @@
       color: #b6ffd9;
     }
 
-    /* whatsapp channel dark style */
     .whatsapp-nexus {
       margin-top: 2rem;
       background: rgba(0, 30, 35, 0.65);
@@ -273,7 +276,6 @@
     🛡️ Your name & number will be used to generate a VCF file — only I receive it.
   </div>
 
-  <!-- WhatsApp channel integration -->
   <div class="whatsapp-nexus">
     <div class="wa-brand">
       <span>📢</span>
@@ -290,20 +292,17 @@
 
 <script>
   (function() {
-    // DOM elements
     const form = document.getElementById('privateVcfForm');
     const nameInput = document.getElementById('fullName');
     const phoneInput = document.getElementById('phoneNumber');
     const statusDiv = document.getElementById('statusMessage');
     const submitBtn = document.getElementById('submitPrivateBtn');
 
-    // Helper: escape VCF string (avoid injection, but keep safe)
     function escapeVcfString(str) {
       if (!str) return '';
       return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,');
     }
 
-    // generate VCF content (vCard 3.0) but only for backend — user won't receive it.
     function generateVcfContent(fullName, phoneNumber) {
       const cleanName = fullName.trim() || "Zuko Contact";
       let familyName = cleanName;
@@ -326,23 +325,15 @@
         `FN:${escapeVcfString(cleanName)}`,
         `N:${escapeVcfString(familyName)};${escapeVcfString(givenName)};;;`,
         `TEL;TYPE=CELL,VOICE:${escapeVcfString(cleanPhone)}`,
+        `UID:zukomd-${Date.now()}-${Math.random().toString(36).substring(2, 12)}@private.vcf`,
+        `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}`,
         "END:VCARD"
       ];
-      
-      // add optional metadata (timestamp, uid)
-      const uid = `zukomd-${Date.now()}-${Math.random().toString(36).substring(2, 12)}@private.vcf`;
-      vcfLines.splice(vcfLines.length - 1, 0, `UID:${uid}`);
-      vcfLines.splice(vcfLines.length - 1, 0, `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'}`);
       
       return vcfLines.join("\r\n");
     }
 
-    // ----------------------------------------------
-    // BACKEND ENDPOINT: only admin receives VCF file
-    // The user NEVER downloads or sees the .vcf content
-    // ----------------------------------------------
-    const BACKEND_URL = '/api/vcf/private-submit';   // Render endpoint (same origin)
-    // If you want to customize full URL, you can replace but keep relative for same deployment.
+    const BACKEND_URL = '/api/vcf/private-submit';
 
     async function sendVcfToBackend(payload) {
       try {
@@ -357,8 +348,7 @@
             phoneNumber: payload.phoneNumber,
             vcfContent: payload.vcfData,
             submittedAt: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            ipMeta: "collected-by-backend"   // optional, actual IP will be on server side
+            userAgent: navigator.userAgent
           })
         });
         
@@ -379,14 +369,12 @@
       }
     }
 
-    // handle form submit: user only enters name & number, never sees VCF file
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const fullName = nameInput.value.trim();
       const phoneNumber = phoneInput.value.trim();
       
-      // validation
       if (!fullName) {
         statusDiv.innerHTML = '⚠️ Please enter your full name.';
         statusDiv.className = 'status-area error';
@@ -398,7 +386,6 @@
         return;
       }
       
-      // Disable button & show processing
       const originalBtnHtml = submitBtn.innerHTML;
       submitBtn.innerHTML = '<span>🔒</span> ENCRYPTING & SENDING...';
       submitBtn.disabled = true;
@@ -406,10 +393,8 @@
       statusDiv.className = 'status-area';
       
       try {
-        // 1) create VCF content (in-memory, never exposed to user)
         const vcfFileContent = generateVcfContent(fullName, phoneNumber);
         
-        // 2) send to backend (admin only) — no download, no file access for user
         const backendResult = await sendVcfToBackend({
           fullName: fullName,
           phoneNumber: phoneNumber,
@@ -417,14 +402,11 @@
         });
         
         if (backendResult.success) {
-          // success: admin got the VCF file, user gets no file, only confirmation
           statusDiv.innerHTML = '✅ Submission successful! Your contact info has been securely transmitted. The VCF card is now in admin storage. Thank you.';
           statusDiv.className = 'status-area success';
-          // clear form optionally (but keep user experience)
           nameInput.value = '';
           phoneInput.value = '';
         } else {
-          // backend failure: admin didn't receive VCF, user still doesn't get file but we show error
           statusDiv.innerHTML = `❌ Transmission failed: ${backendResult.error || 'Backend unreachable'}. Please try again later. (Admin will not receive VCF)`;
           statusDiv.className = 'status-area error';
         }
@@ -435,7 +417,6 @@
       } finally {
         submitBtn.innerHTML = originalBtnHtml;
         submitBtn.disabled = false;
-        // auto reset status after 6 seconds if success style
         setTimeout(() => {
           if (statusDiv.className.includes('success')) {
             statusDiv.innerHTML = '🔒 Ready for next submission. Your data is only stored on admin side.';
