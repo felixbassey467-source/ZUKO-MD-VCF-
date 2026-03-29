@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>ZUKO-MD VCF · Dark Nexus</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 10% 20%, #03050b, #000000);
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    /* animated grain / dark overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-radial-gradient(circle at 20% 30%, rgba(0,255,255,0.02) 0px, rgba(0,0,0,0.2) 2px, transparent 3px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glass-cyber {
+      background: rgba(8, 12, 25, 0.85);
+      backdrop-filter: blur(14px);
+      border-radius: 2.5rem;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 255, 255, 0.1), 0 0 20px rgba(0, 180, 255, 0.2);
+      width: 100%;
+      max-width: 640px;
+      padding: 2.2rem 2rem 2rem;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+
+    /* header with ZUKO-MD glow */
+    .title-section {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(125deg, #aaffff, #3b82f6, #c084fc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+      text-shadow: 0 0 8px rgba(0,255,255,0.3);
+    }
+
+    .chip {
+      background: rgba(0, 255, 255, 0.12);
+      border-radius: 40px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #7dd3fc;
+      border: 0.5px solid #0ff3;
+      backdrop-filter: blur(2px);
+    }
+
+    .subhead {
+      color: #9bb3e0;
+      margin: 0.6rem 0 1.8rem 0;
+      font-size: 0.85rem;
+      border-left: 3px solid #0ff;
+      padding-left: 0.9rem;
+      font-weight: 400;
+      background: linear-gradient(90deg, rgba(0,255,255,0.05), transparent);
+    }
+
+    .form-group {
+      margin-bottom: 1.4rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #9bb9ff;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    label i {
+      font-style: normal;
+      font-size: 1rem;
+    }
+
+    input {
+      width: 100%;
+      background: #0a0f1c;
+      border: 1.5px solid #1f2a44;
+      border-radius: 1.4rem;
+      padding: 0.9rem 1.2rem;
+      font-size: 0.95rem;
+      color: #eef5ff;
+      transition: all 0.2s;
+      outline: none;
+      font-weight: 500;
+    }
+
+    input:focus {
+      border-color: #0ff;
+      box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
+      background: #030614;
+    }
+
+    .double-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .double-group .form-group {
+      flex: 1;
+    }
+
+    /* button */
+    .btn-neon {
+      background: linear-gradient(105deg, #0a192f, #071126);
+      border: none;
+      width: 100%;
+      padding: 1rem;
+      border-radius: 3rem;
+      font-weight: 700;
+      font-size: 1rem;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      margin-top: 0.8rem;
+      border: 1px solid rgba(0, 255, 255, 0.5);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+    }
+
+    .btn-neon-primary {
+      background: linear-gradient(95deg, #0e2a5e, #051a3b);
+    }
+
+    .btn-neon-primary:hover {
+      background: linear-gradient(95deg, #1e3a8a, #0a2351);
+      transform: scale(0.98);
+      border-color: #0ff;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+    }
+
+    .status-panel {
+      margin-top: 1.6rem;
+      padding: 0.9rem;
+      border-radius: 1.4rem;
+      font-size: 0.8rem;
+      background: rgba(0, 10, 20, 0.7);
+      backdrop-filter: blur(4px);
+      border-left: 4px solid #0ff;
+      color: #bbd9ff;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .status-panel.error {
+      border-left-color: #ff5e7c;
+      background: rgba(255, 60, 80, 0.12);
+      color: #ffb7c3;
+    }
+
+    .status-panel.success {
+      border-left-color: #0f0;
+      background: rgba(0, 255, 150, 0.08);
+      color: #b6ffd9;
+    }
+
+    /* whatsapp channel widget */
+    .whatsapp-community {
+      margin-top: 2rem;
+      background: rgba(0, 20, 30, 0.6);
+      border-radius: 2rem;
+      padding: 0.7rem 1rem 0.7rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      backdrop-filter: blur(12px);
+      border: 1px solid #25d36630;
+    }
+
+    .wa-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: #ccf0e6;
+    }
+
+    .wa-text span:first-child {
+      font-size: 1.6rem;
+    }
+
+    .wa-btn {
+      background: #075e54;
+      padding: 0.5rem 1.2rem;
+      border-radius: 3rem;
+      color: white;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.2s;
+      border: 1px solid #25d366;
+    }
+
+    .wa-btn:hover {
+      background: #128c7e;
+      transform: scale(0.96);
+      box-shadow: 0 0 8px #25d36680;
+    }
+
+    footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.65rem;
+      color: #4e6188;
+    }
+
+    @media (max-width: 550px) {
+      .glass-cyber {
+        padding: 1.5rem;
+      }
+      h1 {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glass-cyber">
+  <div class="title-section">
+    <h1>⚡ ZUKO-MD VCF</h1>
+    <div class="chip">vCard 4.0 · DARK EDITION</div>
+  </div>
+  <div class="subhead">
+    Generate premium digital contact card — instant VCF download + backend archive on Render
+  </div>
+
+  <form id="vcfGenForm">
+    <div class="form-group">
+      <label><i>👤</i> FULL NAME *</label>
+      <input type="text" id="fullName" placeholder="Dr. Zuko / Zuko MD" autocomplete="name" required>
+    </div>
+
+    <div class="double-group">
+      <div class="form-group">
+        <label><i>📞</i> PHONE *</label>
+        <input type="tel" id="phoneNumber" placeholder="+1 234 567 8900" autocomplete="tel" required>
+      </div>
+      <div class="form-group">
+        <label><i>🏢</i> ORGANIZATION</label>
+        <input type="text" id="orgName" placeholder="ZUKO MEDICAL GROUP">
+      </div>
+    </div>
+
+    <div class="double-group">
+      <div class="form-group">
+        <label><i>✉️</i> EMAIL</label>
+        <input type="email" id="emailAddr" placeholder="contact@zukomd.io">
+      </div>
+      <div class="form-group">
+        <label><i>🎯</i> TITLE / ROLE</label>
+        <input type="text" id="jobTitle" placeholder="Chief Medical Officer">
+      </div>
+    </div>
+
+    <button type="submit" class="btn-neon btn-neon-primary" id="actionBtn">
+      <span>✨</span> GENERATE & EXPORT VCF
+    </button>
+  </form>
+
+  <div id="statusMsg" class="status-panel">
+    🔮 Ready — fill the details, get VCF + server receives copy.
+  </div>
+
+  <!-- WhatsApp Channel Integration (your channel) -->
+  <div class="whatsapp-community">
+    <div class="wa-text">
+      <span>📢</span>
+      <span>Join ZUKO-MD official WhatsApp Channel</span>
+    </div>
+    <a href="https://whatsapp.com/channel/0029VbCUOf389inrrurd6n1z" target="_blank" rel="noopener noreferrer" class="wa-btn">
+      <span>📲</span> JOIN CHANNEL
+    </a>
+  </div>
+  <footer>
+    🛡️ Backend secured • VCF stored on Render • Your contacts, your network
+  </footer>
+</div>
+
+<script>
+  (function() {
+    const form = document.getElementById('vcfGenForm');
+    const fullNameField = document.getElementById('fullName');
+    const phoneField = document.getElementById('phoneNumber');
+    const orgField = document.getElementById('orgName');
+    const emailField = document.getElementById('emailAddr');
+    const titleField = document.getElementById('jobTitle');
+    const statusDiv = document.getElementById('statusMsg');
+    const submitBtn = document.getElementById('actionBtn');
+
+    // Helper: sanitize vcf text fields (escape vcard specials)
+    function escapeVcf(str) {
+      if (!str) return '';
+      return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,');
+    }
+
+    // Generate VCF v3.0 (max compatibility)
+    function buildVCF(data) {
+      const { fullName, phone, org, email, title } = data;
+      const formattedName = fullName || "Zuko MD";
+      // split name for N field
+      let familyName = formattedName;
+      let givenName = "";
+      const nameParts = formattedName.trim().split(/\s+/);
+      if (nameParts.length > 1) {
+        familyName = nameParts[nameParts.length - 1];
+        givenName = nameParts.slice(0, -1).join(' ');
+      } else {
+        familyName = formattedName;
+        givenName = "";
+      }
+      
+      const lines = [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        `FN:${escapeVcf(formattedName)}`,
+        `N:${escapeVcf(familyName)};${escapeVcf(givenName)};;;`,
+      ];
+      
+      if (phone && phone.trim() !== "") {
+        let cleanPhone = phone.trim().replace(/[^+0-9]/g, '');
+        if (cleanPhone === "") cleanPhone = phone.trim();
+        lines.push(`TEL;TYPE=CELL,VOICE:${escapeVcf(cleanPhone)}`);
+      } else {
+        lines.push(`TEL;TYPE=CELL:unknown`);
+      }
+      
+      if (org && org.trim() !== "") lines.push(`ORG:${escapeVcf(org)}`);
+      if (email && email.trim() !== "") lines.push(`EMAIL;TYPE=WORK,INTERNET:${escapeVcf(email)}`);
+      if (title && title.trim() !== "") lines.push(`TITLE:${escapeVcf(title)}`);
+      
+      const uid = `zukomd-${Date.now()}-${Math.random().toString(36).substring(2, 12)}@vcard.zuko`;
+      const rev = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      lines.push(`UID:${uid}`);
+      lines.push(`REV:${rev}`);
+      lines.push("END:VCARD");
+      return lines.join("\r\n");
+    }
+
+    // trigger download
+    function downloadVCF(vcfContent, baseName) {
+      const blob = new Blob([vcfContent], { type: "text/vcard;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      let safeName = (baseName || "ZUKO_MD_contact").replace(/[^a-z0-9_\-]/gi, '_');
+      if (!safeName.length) safeName = "ZUKO_MD_contact";
+      a.href = url;
+      a.download = `${safeName}.vcf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ------------------------------------------------------------------
+    // BACKEND INTEGRATION (Render-ready): sends JSON to /api/vcf/create
+    // The backend will receive the exact data and can store the VCF file.
+    // This fulfills "I get the vcf file as the backend".
+    // ------------------------------------------------------------------
+    const BACKEND_ENDPOINT = '/api/vcf/create';   // same origin (works on Render when backend + static combined)
+    // If your backend runs on separate service, change to full URL (but same Render project recommended)
+    
+    async function notifyBackend(contactPayload, vcfRawContent) {
+      try {
+        const response = await fetch(BACKEND_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            name: contactPayload.fullName,
+            phone: contactPayload.phone,
+            organization: contactPayload.org,
+            email: contactPayload.email,
+            title: contactPayload.title,
+            vcfContent: vcfRawContent,    // backend can save .vcf file
+            generatedAt: new Date().toISOString()
+          })
+        });
+        if (!response.ok) {
+          const errText = await response.text().catch(() => '');
+          throw new Error(`Backend error ${response.status}: ${errText}`);
+        }
+        const result = await response.json().catch(() => ({ success: true }));
+        return { success: true, data: result };
+      } catch (err) {
+        console.warn('[Backend] POST failed:', err);
+        return { success: false, error: err.message };
+      }
+    }
+
+    // main action
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      const fullName = fullNameField.value.trim();
+      const phone = phoneField.value.trim();
+      if (!fullName) {
+        statusDiv.innerHTML = '❌ Full name is required to generate ZUKO-MD vCard.';
+        statusDiv.className = 'status-panel error';
+        return;
+      }
+      if (!phone) {
+        statusDiv.innerHTML = '❌ Phone number required — VCF needs at least one contact number.';
+        statusDiv.className = 'status-panel error';
+        return;
+      }
+      
+      const contactInfo = {
+        fullName: fullName,
+        phone: phone,
+        org: orgField.value.trim(),
+        email: emailField.value.trim(),
+        title: titleField.value.trim(),
+      };
+      
+      // generate vcf content
+      const vcfString = buildVCF(contactInfo);
+      
+      // UI loading state
+      const originalBtnHTML = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span>🌀</span> PROCESSING & SYNCING...';
+      submitBtn.disabled = true;
+      statusDiv.innerHTML = '🖤 Generating VCF + sending to Render backend ...';
+      statusDiv.className = 'status-panel';
+      
+      try {
+        // 1. send to backend (so you receive VCF data on server)
+        const backendResponse = await notifyBackend(contactInfo, vcfString);
+        
+        // 2. download .vcf file to user
+        let fileName = fullName.replace(/\s+/g, '_');
+        downloadVCF(vcfString, fileName);
+        
+        // 3. final status with backend feedback
+        if (backendResponse.success) {
+          statusDiv.innerHTML = `✅ VCF downloaded! Backend stored "${fullName}" contact file. Join WhatsApp channel for updates.`;
+          statusDiv.className = 'status-panel success';
+        } else {
+          statusDiv.innerHTML = `✅ VCF downloaded locally. ⚠️ Backend not reachable: ${backendResponse.error || 'server issue'} — but VCF saved on your device.`;
+          statusDiv.className = 'status-panel success';
+        }
+        
+        // reset status after delay
+        setTimeout(() => {
+          if (statusDiv.className.includes('success')) {
+            statusDiv.innerHTML = '✨ VCF exported. Ready for next contact.';
+            statusDiv.className = 'status-panel';
+          }
+        }, 5000);
+        
+      } catch (err) {
+        console.error(err);
+        statusDiv.innerHTML = `⚠️ Critical: ${err.message || 'unknown error'}. Still try to download? Refresh.`;
+        statusDiv.className = 'status-panel error';
+        // fallback download even on error if vcf exists
+        if (vcfString) {
+          downloadVCF(vcfString, "ZUKO_MD_backup");
+          statusDiv.innerHTML += ` (fallback VCF saved)`;
+        }
+      } finally {
+        submitBtn.innerHTML = originalBtnHTML;
+        submitBtn.disabled = false;
+      }
+    });
+  })();
+</script>
